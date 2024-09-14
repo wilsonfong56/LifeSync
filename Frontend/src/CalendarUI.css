@@ -1,0 +1,13 @@
+#calendar {
+    max-width: 100%;
+    max-height: 50%;
+    margin: 20px auto;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#logoutButton {
+    position: fixed; /* Fixed positioning relative to the viewport */
+    top: 10px; /* Distance from the top edge of the viewport */
+    right: 10px; /* Distance from the right edge of the viewport */
+}
