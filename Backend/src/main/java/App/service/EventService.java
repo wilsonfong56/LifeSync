@@ -51,7 +51,7 @@ public class EventService {
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
     private final NetHttpTransport HTTP_TRANSPORT;
     private final ChatLanguageModel llm = OpenAiChatModel
-            .withApiKey("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");
+            .withApiKey("YOUR_API_KEY");
 
     private final Calendar service;
     private EventRepository eventRepository;
