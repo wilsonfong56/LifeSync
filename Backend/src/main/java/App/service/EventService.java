@@ -36,7 +36,7 @@ public class EventService {
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private NetHttpTransport HTTP_TRANSPORT;
     private final ChatLanguageModel llm = OpenAiChatModel
-            .withApiKey("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");
+            .withApiKey("YOUR_API_KEY");
 
     private Calendar service;
     private final EventRepository eventRepository;
