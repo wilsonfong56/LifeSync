@@ -8,7 +8,7 @@ function App() {
     useEffect(() => {
         const initClient = () => {
             gapi.client.init({
-                clientId: '897659353364-t61qemfnk5jiju4b1ernfce6m46jicli.apps.googleusercontent.com', // Replace with your client ID
+                clientId: 'YOUR_CLIENT_ID',
                 scope: 'https://www.googleapis.com/auth/calendar',
             });
         };

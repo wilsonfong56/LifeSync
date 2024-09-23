@@ -1,21 +1,15 @@
 package App.service;
 
+import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.DateTime;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
-import com.google.api.services.calendar.model.Events;
 import com.google.gson.Gson;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -28,12 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import App.repository.EventRepository;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -44,20 +34,15 @@ import static dev.langchain4j.data.message.UserMessage.userMessage;
 public class EventService {
 
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
-    private static final List<String> SCOPES =
-            Collections.singletonList(CalendarScopes.CALENDAR);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
     private NetHttpTransport HTTP_TRANSPORT;
     private final ChatLanguageModel llm = OpenAiChatModel
-            .withApiKey("YOUR_API_KEY");
+            .withApiKey("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");
 
     private Calendar service;
-    private EventRepository eventRepository;
+    private final EventRepository eventRepository;
 
     @Autowired
     public EventService(EventRepository eventRepository) {
-        // Initialize HTTP_TRANSPORT and App.service in the constructor
         this.eventRepository = eventRepository;
     }
 
