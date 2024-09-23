@@ -4,12 +4,12 @@ import com.google.api.client.util.DateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
+//
 @Entity
-@Table(name="Events")
+@Table(name="events")
 public class AppEvent {
 
-    //private String calendarId;
+    //private String calendarId;]
     @Id
     private String eventId;
     private String summary;
@@ -53,8 +53,8 @@ public class AppEvent {
     }
 
 
-    @java.lang.Override
-    public java.lang.String toString() {
+    @Override
+    public String toString() {
         return "Event{" +
                 " eventId='" + eventId + '\'' +
                 ", summary='" + summary + '\'' +

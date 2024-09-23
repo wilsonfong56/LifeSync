@@ -23,6 +23,14 @@ function App() {
             const accessToken = response.getAuthResponse().access_token;
             console.log('Access token:', accessToken);
 
+            const apiResponse = await fetch('http://localhost:8080/api/v1/event/auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
             const calendarResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
