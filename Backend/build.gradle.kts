@@ -8,7 +8,7 @@
 plugins {
     id("java")
     id("application")
-    id("org.springframework.boot") version "3.1.4"
+    id("org.springframework.boot") version "3.2.0"
     id("io.spring.dependency-management") version "1.1.3"
     kotlin("jvm") version "1.8.0"
     kotlin("plugin.spring") version "1.8.0"
@@ -35,8 +35,10 @@ dependencies {
     implementation("com.google.apis:google-api-services-calendar:v3-rev20240705-2.0.0")
     implementation("dev.langchain4j:langchain4j-open-ai:0.34.0")
     implementation("dev.langchain4j:langchain4j:0.34.0")
+    implementation("dev.langchain4j:langchain4j-spring-boot-starter:0.34.0")
+    implementation("dev.langchain4j:langchain4j-open-ai-spring-boot-starter:0.34.0")
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter:3.2.0")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.postgresql:postgresql:42.6.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin") // For JSON serialization/deserialization

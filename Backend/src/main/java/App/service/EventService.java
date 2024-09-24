@@ -10,12 +10,8 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.service.AiServices;
 import jakarta.transaction.Transactional;
 import App.model.AppEvent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,23 +19,24 @@ import org.springframework.stereotype.Service;
 import App.repository.EventRepository;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.List;
-
-import static dev.langchain4j.data.message.UserMessage.userMessage;
 
 @Service
 @Transactional
 public class EventService {
 
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    private NetHttpTransport HTTP_TRANSPORT;
-    private final ChatLanguageModel llm = OpenAiChatModel
-            .withApiKey("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");
 
     private Calendar service;
     private final EventRepository eventRepository;
+
+    @Autowired
+    private CreationAssistant creationChat;
+    @Autowired
+    private DeletionAssistant deletionChat;
 
     @Autowired
     public EventService(EventRepository eventRepository) {
@@ -47,81 +44,69 @@ public class EventService {
     }
 
     public void setToken(String token) throws GeneralSecurityException, IOException {
-        this.HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod())
                 .setAccessToken(token);
         this.service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential).build();
     }
 
     public void createEvent(String userMessage) throws IOException{
-        CreationAssistant chain;
-        ChatMemory memory = MessageWindowChatMemory.withMaxMessages(10);
-
         DateTime now = new DateTime(System.currentTimeMillis());
-        System.out.println(now);
-        memory.add(userMessage("Current time is " + now));
-        chain = AiServices.builder(CreationAssistant.class)
-                .chatLanguageModel(llm)
-                .chatMemory(memory)
-                .build();
-        String answer = chain.chat(userMessage);
+        creationChat.chat("Current time is " + now);
+        String answer = creationChat.chat(userMessage);
 
         System.out.println(answer);
 
+        Type listType = new TypeToken<List<HashMap<String, String>>>(){}.getType();
         Gson gson = new Gson();
-        HashMap<String, String> answerMap = gson.fromJson(answer, HashMap.class);
-        String summary = answerMap.get("summary");
-        String startTime;
-        String endTime = answerMap.get("endTime");
-        boolean isDynamic = Boolean.parseBoolean(answerMap.get("isDynamic"));
-        if(isDynamic) {
-            startTime = endTime;
+        List<HashMap<String, String>> events = gson.fromJson(answer, listType);
+        for(HashMap<String, String> event : events) {
+            String summary = event.get("summary");
+            String startTime;
+            String endTime = event.get("endTime");
+            boolean isDynamic = Boolean.parseBoolean(event.get("isDynamic"));
+            if (isDynamic) {
+                startTime = endTime;
+            } else {
+                startTime = event.get("startTime");
+            }
+
+            Event eventObj = new Event()
+                    .setSummary(summary);
+
+            DateTime startDateTime = new DateTime(startTime);
+            DateTime endDateTime = new DateTime(endTime);
+            EventDateTime start = new EventDateTime()
+                    .setDateTime(startDateTime);
+            eventObj.setStart(start);
+
+            EventDateTime end = new EventDateTime()
+                    .setDateTime(endDateTime);
+            eventObj.setEnd(end);
+
+            String calendarId = "primary";
+            eventObj = service.events().insert(calendarId, eventObj).execute();
+            System.out.printf("Event created: %s\n", eventObj.getHtmlLink());
+
+            //Save our event in our App.repository
+            AppEvent appEvent = new AppEvent(eventObj.getId(),
+                    eventObj.getSummary(),
+                    eventObj.getStart().getDateTime(),
+                    eventObj.getEnd().getDateTime(),
+                    isDynamic);
+            eventRepository.save(appEvent);
         }
-        else {
-            startTime = answerMap.get("startTime");
-        }
-
-
-        Event event = new Event()
-                .setSummary(summary);
-
-        DateTime startDateTime = new DateTime(startTime);
-        DateTime endDateTime = new DateTime(endTime);
-        EventDateTime start = new EventDateTime()
-                .setDateTime(startDateTime)
-                .setTimeZone("America/Los_Angeles");
-        event.setStart(start);
-
-        EventDateTime end = new EventDateTime()
-                .setDateTime(endDateTime)
-                .setTimeZone("America/Los_Angeles");
-        event.setEnd(end);
-
-        String calendarId = "primary";
-        event = service.events().insert(calendarId, event).execute();
-        System.out.printf("Event created: %s\n", event.getHtmlLink());
-
-        //Save our event in our App.repository
-        AppEvent appEvent = new AppEvent(event.getId(),
-                                         event.getSummary(),
-                                         event.getStart().getDateTime(),
-                                         event.getEnd().getDateTime(),
-                                         isDynamic);
-        eventRepository.save(appEvent);
     }
 
     public void deleteEvent(String userMessage) throws IOException {
-        DeletionAssistant chain;
-        chain = AiServices.builder(DeletionAssistant.class)
-                .chatLanguageModel(llm)
-                .build();
-
         List<String> eventSummaries = eventRepository.findAll()
                 .stream()
                 .map(AppEvent::getSummary)
                 .toList();
 
-        String summary = chain.chat(eventSummaries + userMessage);
+        String summary = deletionChat.chat(eventSummaries + userMessage);
+        System.out.println(eventSummaries);
+        System.out.println(summary);
         AppEvent event = eventRepository.findBySummary(summary);
         if(event != null) {
             service.events().delete("primary", event.getEventId()).execute();
