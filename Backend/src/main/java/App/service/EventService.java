@@ -10,8 +10,13 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.Events;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.service.AiServices;
+import dev.langchain4j.service.UserMessage;
 import jakarta.transaction.Transactional;
 import App.model.AppEvent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +26,7 @@ import App.repository.EventRepository;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,22 +38,49 @@ public class EventService {
 
     private Calendar service;
     private final EventRepository eventRepository;
+    private final ChatLanguageModel chatLanguageModel;
 
     @Autowired
     private CreationAssistant creationChat;
     @Autowired
     private DeletionAssistant deletionChat;
 
+
     @Autowired
-    public EventService(EventRepository eventRepository) {
+    public EventService(EventRepository eventRepository, ChatLanguageModel chatLanguageModel) {
         this.eventRepository = eventRepository;
+        this.chatLanguageModel = chatLanguageModel;
+
     }
 
-    public void setToken(String token) throws GeneralSecurityException, IOException {
+    public void authenticate(String token) throws GeneralSecurityException, IOException {
         NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod())
                 .setAccessToken(token);
         this.service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential).build();
+
+        interface DynamicAnalyzer {
+            @UserMessage("Determine whether the event, {{it}}, is dynamic or not. An event is considered dynamic if it can be moved or rescheduled within the user's schedule, " +
+                    "even if the user has assigned a time to it (e.g., going to the gym or studying). In contrast, static events cannot be rescheduled and " +
+                    "must happen at a specific time (e.g., meetings or appointments).")
+            boolean isDynamic(String text);
+        }
+
+        DynamicAnalyzer dynamicAnalyzer = AiServices.create(DynamicAnalyzer.class, chatLanguageModel);
+        Events events = service.events().list("primary")
+                .setMaxResults(100)
+                .setTimeMin(new DateTime(System.currentTimeMillis()))
+                .setSingleEvents(true)
+                .execute();
+
+        List<Event> eventItems = events.getItems();
+        for(Event item : eventItems) {
+            eventRepository.save(new AppEvent(item.getId(),
+                    item.getSummary(),
+                    item.getStart().getDateTime(),
+                    item.getEnd().getDateTime(),
+                    dynamicAnalyzer.isDynamic(item.getSummary())));
+        }
     }
 
     public void createEvent(String userMessage) throws IOException{
@@ -116,6 +149,29 @@ public class EventService {
 
     public List<AppEvent> getEvents() {
         return eventRepository.findAll();
+    }
+
+    public List<Event> getEventsFromNow() throws IOException {
+        Events events = service.events().list("primary")
+                .setMaxResults(100)
+                .setTimeMin(new DateTime(System.currentTimeMillis()))
+                .setSingleEvents(true)
+                .execute();
+        return events.getItems();
+    }
+
+    public void alertsOn() throws IOException {
+        for(Event item : getEventsFromNow()) {
+            item.setReminders(new Event.Reminders());
+            service.events().update("primary", item.getId(), item).execute();
+        }
+    }
+
+    public void alertsOff() throws IOException {
+        for (Event item : getEventsFromNow()) {
+            item.setReminders(new Event.Reminders().setUseDefault(false).setOverrides(new ArrayList<>()));
+            service.events().update("primary", item.getId(), item).execute();
+        }
     }
 
     public static void main(String[] args) throws GeneralSecurityException, IOException {

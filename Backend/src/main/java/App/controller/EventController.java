@@ -10,7 +10,6 @@ import App.service.EventService;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping(path = "api/v1/event")
@@ -25,9 +24,9 @@ public class EventController {
     }
 
     @PostMapping("/auth")
-    public ResponseEntity<HttpStatus> setToken(@RequestHeader("Authorization") String auth) throws GeneralSecurityException, IOException {
+    public ResponseEntity<HttpStatus> authenticate(@RequestHeader("Authorization") String auth) throws GeneralSecurityException, IOException {
         String token = auth.replace("Bearer ", "");
-        eventService.setToken(token);
+        eventService.authenticate(token);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 

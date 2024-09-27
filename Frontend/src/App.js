@@ -52,7 +52,7 @@ function App() {
     };
 
     return (
-        <div>
+        <div id="login">
             <h1>Google Calendar Integration</h1>
             <button onClick={handleLogin}>Login with Google</button>
         </div>

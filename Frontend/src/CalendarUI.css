@@ -1,13 +1,14 @@
+
 #calendar {
-    max-width: 100%;
-    max-height: 50%;
-    margin: 20px auto;
-    padding: 10px;
-    box-sizing: border-box;
+    position: absolute;
+    margin-right: 40%;
 }
 
 #logoutButton {
-    position: fixed; /* Fixed positioning relative to the viewport */
-    top: 10px; /* Distance from the top edge of the viewport */
-    right: 10px; /* Distance from the right edge of the viewport */
+    flex: 0.3;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: darkred;
+    color: white;
 }
