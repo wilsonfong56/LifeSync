@@ -14,7 +14,6 @@ import com.google.api.services.calendar.model.Events;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.UserMessage;
 import jakarta.transaction.Transactional;
@@ -39,11 +38,14 @@ public class EventService {
     private Calendar service;
     private final EventRepository eventRepository;
     private final ChatLanguageModel chatLanguageModel;
+    private boolean alertsOn = true;
 
     @Autowired
     private CreationAssistant creationChat;
     @Autowired
     private DeletionAssistant deletionChat;
+    @Autowired
+    private ParsingAssistant parsingAssistant;
 
 
     @Autowired
@@ -83,10 +85,28 @@ public class EventService {
         }
     }
 
-    public void createEvent(String userMessage) throws IOException{
+    public void parseInput(String userMessage) throws IOException {
+        String answer = parsingAssistant.chat(userMessage);
+        if(answer.equals("create")) {
+            // For testing without creating an event
+//            System.out.println(answer);
+//            DateTime now = new DateTime(System.currentTimeMillis());
+//            String answer1 = creationChat.chat("The current time is " + now + userMessage);
+//            System.out.println(answer1);
+            createEvent(userMessage);   //comment out when testing
+        }
+        else if(answer.equals("delete")) {
+//            System.out.println(answer);
+            deleteEvent(userMessage);
+        }
+        else {
+            System.out.println(answer);
+        }
+    }
+
+    public void createEvent(String userMessage) throws IOException{ //creates multiple if needed (might want to abstract this later)
         DateTime now = new DateTime(System.currentTimeMillis());
-        creationChat.chat("Current time is " + now);
-        String answer = creationChat.chat(userMessage);
+        String answer = creationChat.chat("The current time is " + now + userMessage);
 
         System.out.println(answer);
 
@@ -131,7 +151,7 @@ public class EventService {
         }
     }
 
-    public void deleteEvent(String userMessage) throws IOException {
+    public void deleteEvent(String userMessage) throws IOException {    //
         List<String> eventSummaries = eventRepository.findAll()
                 .stream()
                 .map(AppEvent::getSummary)
@@ -160,23 +180,20 @@ public class EventService {
         return events.getItems();
     }
 
-    public void alertsOn() throws IOException {
+    public void setAlerts() throws IOException {
         for(Event item : getEventsFromNow()) {
-            item.setReminders(new Event.Reminders());
-            service.events().update("primary", item.getId(), item).execute();
+            if(!alertsOn) {
+                System.out.println("Turning alerts on");
+                item.setReminders(new Event.Reminders());
+                service.events().update("primary", item.getId(), item).execute();
+            }
+            else {
+                System.out.println("Turning alerts off");
+                item.setReminders(new Event.Reminders().setUseDefault(false).setOverrides(new ArrayList<>()));
+                service.events().update("primary", item.getId(), item).execute();
+            }
         }
+        alertsOn = !alertsOn;
     }
-
-    public void alertsOff() throws IOException {
-        for (Event item : getEventsFromNow()) {
-            item.setReminders(new Event.Reminders().setUseDefault(false).setOverrides(new ArrayList<>()));
-            service.events().update("primary", item.getId(), item).execute();
-        }
-    }
-
-    public static void main(String[] args) throws GeneralSecurityException, IOException {
-
-    }
-
 
 }

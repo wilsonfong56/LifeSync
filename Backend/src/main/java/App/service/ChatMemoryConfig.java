@@ -11,4 +11,8 @@ public class ChatMemoryConfig {
     public MessageWindowChatMemory shortChatMemory() {
         return MessageWindowChatMemory.withMaxMessages(3);
     }
+
+    @Bean MessageWindowChatMemory longChatMemory() {
+        return MessageWindowChatMemory.withMaxMessages(100);
+    }
 }

@@ -31,13 +31,9 @@ public class EventController {
     }
 
     @PostMapping
-    public void createEvent(@RequestParam String userInput) throws IOException {
-        eventService.createEvent(userInput);
-    }
-
-    @DeleteMapping
-    public void deleteEvent(@RequestParam String userInput) throws IOException {
-        eventService.deleteEvent(userInput);
+    public ResponseEntity<HttpStatus> parseInput(@RequestParam String userInput) throws IOException {
+        eventService.parseInput(userInput);
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @GetMapping
@@ -45,4 +41,9 @@ public class EventController {
         return eventService.getEvents();
     }
 
+    @PostMapping("/alert")
+    public ResponseEntity<HttpStatus> setAlerts() throws IOException {
+        eventService.setAlerts();
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
 }

@@ -1,6 +1,8 @@
 import React, {useEffect} from 'react';
 import { gapi } from 'gapi-script';
 import { useNavigate } from 'react-router-dom';
+import './index.css';
+import './App.css';
 
 function App() {
     const navigate = useNavigate();
@@ -33,7 +35,7 @@ function App() {
 
             const calendarResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
                 headers: {
-                    Authorization: `Bearer ${accessToken}`
+                    'Authorization': `Bearer ${accessToken}`
                 }
             });
 
@@ -54,7 +56,7 @@ function App() {
     return (
         <div id="login">
             <h1>Google Calendar Integration</h1>
-            <button onClick={handleLogin}>Login with Google</button>
+            <button id="loginButton" onClick={handleLogin}>Login with Google</button>
         </div>
     );
 }
