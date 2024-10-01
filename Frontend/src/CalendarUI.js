@@ -27,7 +27,7 @@ function CalendarUI() {
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                googleCalendarApiKey: 'AIzaSyDhF-MYO1Ukf2FgUD2341crTZ7--NiUEjs',
+                googleCalendarApiKey: 'GOOGLE_CALENDAR_API_KEY',
                 events: {
                     googleCalendarId: calendarId,
                     extraParams: {
