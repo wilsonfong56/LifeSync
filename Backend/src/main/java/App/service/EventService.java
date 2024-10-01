@@ -69,14 +69,10 @@ public class EventService {
         }
 
         DynamicAnalyzer dynamicAnalyzer = AiServices.create(DynamicAnalyzer.class, chatLanguageModel);
-        Events events = service.events().list("primary")
-                .setMaxResults(100)
-                .setTimeMin(new DateTime(System.currentTimeMillis()))
-                .setSingleEvents(true)
-                .execute();
 
-        List<Event> eventItems = events.getItems();
-        for(Event item : eventItems) {
+        List<Event> events = getEventsFromNow();
+
+        for(Event item : events) {
             eventRepository.save(new AppEvent(item.getId(),
                     item.getSummary(),
                     item.getStart().getDateTime(),
@@ -184,7 +180,7 @@ public class EventService {
         for(Event item : getEventsFromNow()) {
             if(!alertsOn) {
                 System.out.println("Turning alerts on");
-                item.setReminders(new Event.Reminders());
+                item.setReminders(new Event.Reminders().set("minutes", 30));
                 service.events().update("primary", item.getId(), item).execute();
             }
             else {
