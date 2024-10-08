@@ -1,23 +1,24 @@
-import React, {useEffect, useRef, useState} from 'react';
-import { Calendar } from '@fullcalendar/core'; // Correctly import Calendar
-import googleCalendarPlugin from '@fullcalendar/google-calendar'; // Google Calendar plugin
-import dayGridPlugin from '@fullcalendar/daygrid'; // Month view
+import React, {createContext, useEffect, useRef, useState} from 'react';
+import { Calendar } from '@fullcalendar/core';
+import googleCalendarPlugin from '@fullcalendar/google-calendar';
+import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import './index.css'
 import './CalendarUI.css';
 import { useNavigate, useLocation } from "react-router-dom";
 import { googleLogout } from "@react-oauth/google";
 import Switch from "react-switch";
+import ChatUI from "./ChatUI";
 
 function CalendarUI() {
-    const calendarRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
+    const calendarRef = useRef(null);
     const { calendarId, accessToken } = location.state || {};
-    const [userInput, setUserInput] = useState('');
     const [alertsState, setAlertsState] = useState(true);
 
     const fetchCalendar = () => {
+        console.log("Calendar fetching");
         try {
             let calendar = new Calendar(calendarRef.current, {
                 plugins: [googleCalendarPlugin, dayGridPlugin, timeGridPlugin],
@@ -45,21 +46,10 @@ function CalendarUI() {
         fetchCalendar();
     }, [calendarId, accessToken]);
 
-
     const logOut = () => {
         console.log("Logout successful");
         googleLogout();
         navigate("/");
-    }
-
-    async function handleSubmit(event) {
-        event.preventDefault();
-        console.log(userInput);
-        setUserInput("");
-        const apiResponse = await fetch(`http://localhost:8080/api/v1/event?userInput=${encodeURIComponent(userInput)}`, {
-            method: 'POST',
-        });
-        fetchCalendar();
     }
 
     async function handleSwitch() {
@@ -72,21 +62,18 @@ function CalendarUI() {
     return (
         <div className="CalendarUI">
             <button id="logoutButton" onClick={logOut}>Log out</button>
-            <div id="calendar" ref={calendarRef}/>
-            <div className="input-container">
-                <form onSubmit={handleSubmit}>
-                    <input id="textInput"
-                           value={userInput}
-                           onChange={(event) => setUserInput(event.target.value)}
-                    />
-                    <button type="submit">Submit</button>
-                </form>
+            <div className="flex-container">
+                <div className="flex-child1">
+                    <div id="calendar" ref={calendarRef}/>
+                </div>
+                <div className="flex-child2">
+                    <div className="switch-container">
+                        <Switch id="switch" checked={alertsState} onChange={handleSwitch}/>
+                        <label htmlFor="switch">{alertsState ? "Alerts on" : "Alerts off"}</label>
+                    </div>
+                    <ChatUI fetchCalendar={ fetchCalendar }/>
+                </div>
             </div>
-            <div className="switch-container">
-                <label htmlFor="switch">{alertsState ? "Alerts on" : "Alerts off"}</label>
-                <Switch id="switch" checked={alertsState} onChange={handleSwitch}/>
-            </div>
-
         </div>
 
     )

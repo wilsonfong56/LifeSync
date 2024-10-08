@@ -1,29 +1,21 @@
-:root {
-    --fc-border-color: black;
-    --fc-daygrid-event-dot-width: 5px;
-}
-
 .CalendarUI {
-    position: relative;
     height: 100%;
     margin-left: 20px;
+    position: relative;
 }
 
 #calendar {
-    position: relative;
-    margin-right: 30%;
     height: 100%;
-    border: black;
 }
 
 #logoutButton {
-    position: fixed;
-    top: 10px;
-    right: 10px;
+    position: relative;
+    float: right;
     background-color: orangered;
     color: white;
     cursor: pointer;
     transition-duration: 0.4s;
+
 }
 
 #logoutButton:hover {
@@ -32,20 +24,33 @@
 }
 
 .switch-container {
-    display: flex;
-    align-items: center;
-}
-
-.input-container {
     position: absolute;
-    align-items: center;
-    right: 0;
-    display: flex;
-    width: 30%;
+    top: 10px;
 }
 
-#textInput {
-    width: 400px;
+
+/*#textInput {*/
+/*    width: 400px;*/
+/*}*/
+
+.flex-container {
+    display: flex;
+    height: 100%;
+    padding-top: 10px;
 }
+
+.flex-child1 {
+    flex-grow: 2;
+    padding-right: 10px;
+}
+
+.flex-child2 {
+    flex-grow: 1;
+    border: 2px solid black;
+    margin-top: 65px;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
 
 

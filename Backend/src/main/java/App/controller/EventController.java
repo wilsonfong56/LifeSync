@@ -31,9 +31,8 @@ public class EventController {
     }
 
     @PostMapping
-    public ResponseEntity<HttpStatus> parseInput(@RequestParam String userInput) throws IOException {
-        eventService.parseInput(userInput);
-        return ResponseEntity.ok(HttpStatus.OK);
+    public String parseInput(@RequestParam String userInput) throws IOException {
+        return eventService.parseInput(userInput);
     }
 
     @GetMapping

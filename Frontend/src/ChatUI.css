@@ -1,0 +1,14 @@
+.chat-container {
+    max-height: 850px;
+    overflow-y: scroll;
+}
+
+#textInput {
+    width: 90%;
+}
+
+.input-container {
+    position: absolute;
+    width: 38%;
+    bottom: 0;
+}

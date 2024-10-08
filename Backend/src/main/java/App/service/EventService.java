@@ -81,7 +81,7 @@ public class EventService {
         }
     }
 
-    public void parseInput(String userMessage) throws IOException {
+    public String parseInput(String userMessage) throws IOException {
         String answer = parsingAssistant.chat(userMessage);
         if(answer.equals("create")) {
             // For testing without creating an event
@@ -89,18 +89,18 @@ public class EventService {
 //            DateTime now = new DateTime(System.currentTimeMillis());
 //            String answer1 = creationChat.chat("The current time is " + now + userMessage);
 //            System.out.println(answer1);
-            createEvent(userMessage);   //comment out when testing
+            return createEvent(userMessage);   //comment out when testing
         }
         else if(answer.equals("delete")) {
 //            System.out.println(answer);
-            deleteEvent(userMessage);
+            return deleteEvent(userMessage);
         }
         else {
-            System.out.println(answer);
+            return answer;
         }
     }
 
-    public void createEvent(String userMessage) throws IOException{ //creates multiple if needed (might want to abstract this later)
+    public String createEvent(String userMessage) throws IOException{ //creates multiple if needed (might want to abstract this later)
         DateTime now = new DateTime(System.currentTimeMillis());
         String answer = creationChat.chat("The current time is " + now + userMessage);
 
@@ -145,9 +145,10 @@ public class EventService {
                     isDynamic);
             eventRepository.save(appEvent);
         }
+        return "Event created";
     }
 
-    public void deleteEvent(String userMessage) throws IOException {    //
+    public String deleteEvent(String userMessage) throws IOException {    //
         List<String> eventSummaries = eventRepository.findAll()
                 .stream()
                 .map(AppEvent::getSummary)
@@ -161,6 +162,7 @@ public class EventService {
             service.events().delete("primary", event.getEventId()).execute();
             eventRepository.delete(event);
         }
+        return "Event(s) deleted";
     }
 
     public List<AppEvent> getEvents() {
