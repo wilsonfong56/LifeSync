@@ -10,6 +10,7 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.EventReminder;
 import com.google.api.services.calendar.model.Events;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -104,11 +106,12 @@ public class EventService {
         DateTime now = new DateTime(System.currentTimeMillis());
         String answer = creationChat.chat("The current time is " + now + userMessage);
 
-        System.out.println(answer);
+        String answerMod = answer.substring(answer.indexOf("["), answer.indexOf("]")+1);
+        System.out.println(answerMod);
 
         Type listType = new TypeToken<List<HashMap<String, String>>>(){}.getType();
         Gson gson = new Gson();
-        List<HashMap<String, String>> events = gson.fromJson(answer, listType);
+        List<HashMap<String, String>> events = gson.fromJson(answerMod, listType);
         for(HashMap<String, String> event : events) {
             String summary = event.get("summary");
             String startTime;
@@ -182,7 +185,10 @@ public class EventService {
         for(Event item : getEventsFromNow()) {
             if(!alertsOn) {
                 System.out.println("Turning alerts on");
-                item.setReminders(new Event.Reminders().set("minutes", 30));
+                item.setReminders(new Event.Reminders().setUseDefault(false).setOverrides(Arrays.asList(
+                        new EventReminder().setMethod("email").setMinutes(30),
+                        new EventReminder().setMethod("popup").setMinutes(30)
+                )));
                 service.events().update("primary", item.getId(), item).execute();
             }
             else {
