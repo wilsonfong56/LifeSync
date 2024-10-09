@@ -158,10 +158,12 @@ public class EventService {
                 .toList();
 
         String summary = deletionChat.chat(eventSummaries + userMessage);
-        System.out.println(eventSummaries);
-        System.out.println(summary);
-        AppEvent event = eventRepository.findBySummary(summary);
-        if(event != null) {
+        System.out.println("UserMessage: " + userMessage);
+        System.out.println("Event summaries: " + eventSummaries);
+        System.out.println("Summary: " + summary);
+
+        List<AppEvent> events = eventRepository.findBySummary(summary);
+        for (AppEvent event : events) {
             service.events().delete("primary", event.getEventId()).execute();
             eventRepository.delete(event);
         }

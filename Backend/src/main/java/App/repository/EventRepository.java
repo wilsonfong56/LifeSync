@@ -5,8 +5,10 @@ import App.model.AppEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 //persistent memory
 @Repository
 public interface EventRepository extends JpaRepository<AppEvent, String> {
-    AppEvent findBySummary(String summary);
+    List<AppEvent> findBySummary(String summary);
 }
