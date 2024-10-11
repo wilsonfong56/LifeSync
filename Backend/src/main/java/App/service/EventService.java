@@ -1,5 +1,6 @@
 package App.service;
 
+import App.util.DateUtils;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -26,10 +27,13 @@ import App.repository.EventRepository;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.time.DayOfWeek;
+import static com.google.api.client.util.DateTime.parseRfc3339ToSecondsAndNanos;
 
 @Service
 @Transactional
@@ -48,7 +52,10 @@ public class EventService {
     private DeletionAssistant deletionChat;
     @Autowired
     private ParsingAssistant parsingAssistant;
-
+    @Autowired
+    private PriorityAssistant priorityAssistant;
+    @Autowired
+    private ChatBot chatBot;
 
     @Autowired
     public EventService(EventRepository eventRepository, ChatLanguageModel chatLanguageModel) {
@@ -75,11 +82,17 @@ public class EventService {
         List<Event> events = getEventsFromNow();
 
         for(Event item : events) {
-            eventRepository.save(new AppEvent(item.getId(),
-                    item.getSummary(),
-                    item.getStart().getDateTime(),
-                    item.getEnd().getDateTime(),
-                    dynamicAnalyzer.isDynamic(item.getSummary())));
+            int priority;
+            boolean isDynamic = dynamicAnalyzer.isDynamic(item.getSummary());
+            if (isDynamic) {
+                priority = priorityAssistant.chat(item.getSummary());
+            }
+            else {
+                priority = 10;
+            }
+            eventRepository.save(new AppEvent(item.getId(), item.getSummary(),
+                                item.getStart().getDateTime(), item.getEnd().getDateTime(),
+                                isDynamic, priority));
         }
     }
 
@@ -98,14 +111,17 @@ public class EventService {
             return deleteEvent(userMessage);
         }
         else {
-            return answer;
+            return chatBot.chat(userMessage);
         }
     }
 
     public String createEvent(String userMessage) throws IOException{ //creates multiple if needed (might want to abstract this later)
         DateTime now = new DateTime(System.currentTimeMillis());
-        String answer = creationChat.chat("The current time is " + now + userMessage);
+        String dayOfWeek = DateUtils.dayOfWeek(now);
+        System.out.println(dayOfWeek + now);
+        String answer = creationChat.chat("The current time is " + dayOfWeek + ", " + now + ". " + userMessage);
 
+        System.out.println("Create event says: " + answer);
         String answerMod = answer.substring(answer.indexOf("["), answer.indexOf("]")+1);
         System.out.println(answerMod);
 
@@ -117,11 +133,7 @@ public class EventService {
             String startTime;
             String endTime = event.get("endTime");
             boolean isDynamic = Boolean.parseBoolean(event.get("isDynamic"));
-            if (isDynamic) {
-                startTime = endTime;
-            } else {
-                startTime = event.get("startTime");
-            }
+            startTime = event.get("startTime");
 
             Event eventObj = new Event()
                     .setSummary(summary);
@@ -141,23 +153,31 @@ public class EventService {
             System.out.printf("Event created: %s\n", eventObj.getHtmlLink());
 
             //Save our event in our App.repository
+            int priority;
+            if (isDynamic) {
+                priority = priorityAssistant.chat(eventObj.getSummary());
+            }
+            else {
+                priority = 10;
+            }
             AppEvent appEvent = new AppEvent(eventObj.getId(),
-                    eventObj.getSummary(),
-                    eventObj.getStart().getDateTime(),
-                    eventObj.getEnd().getDateTime(),
-                    isDynamic);
+                                            eventObj.getSummary(),
+                                            eventObj.getStart().getDateTime(),
+                                            eventObj.getEnd().getDateTime(),
+                                            isDynamic, priority);
+
             eventRepository.save(appEvent);
         }
         return "Event created";
     }
 
-    public String deleteEvent(String userMessage) throws IOException {    //
+    public String deleteEvent(String userMessage) throws IOException{    //
         List<String> eventSummaries = eventRepository.findAll()
                 .stream()
                 .map(AppEvent::getSummary)
                 .toList();
 
-        String summary = deletionChat.chat(eventSummaries + userMessage);
+        String summary = deletionChat.chat(eventSummaries + " " + userMessage);
         System.out.println("UserMessage: " + userMessage);
         System.out.println("Event summaries: " + eventSummaries);
         System.out.println("Summary: " + summary);
@@ -200,6 +220,43 @@ public class EventService {
             }
         }
         alertsOn = !alertsOn;
+    }
+
+    public long getDurationInMinutes(DateTime startTime, DateTime endTime) throws ParseException {
+        long start = DateTime.parseRfc3339ToSecondsAndNanos(startTime.toString()).getSeconds();
+        long end = DateTime.parseRfc3339ToSecondsAndNanos(endTime.toString()).getSeconds();
+        return end-start/60;
+    }
+
+    public ArrayList<String> findFreeSlots() throws IOException {
+        ArrayList<String> freeSlots = new ArrayList<>();
+        long now = System.currentTimeMillis();
+        DateTime nowDateTime = new DateTime(now);
+        DateTime endDateTime = new DateTime(now + 604800000);
+        List<Event> events = service.events().list("primary")
+                        .setTimeMin(nowDateTime)
+                        .setTimeMax(endDateTime)
+                        .execute().getItems();
+        String currentDateTime = nowDateTime.toString();
+        String endTime = endDateTime.toString();
+        for (Event event : events) {
+            String eventStart = event.getStart().toString();
+            //check currentDateTime is not in the middle of another event
+            if (!(currentDateTime.compareTo(eventStart) >= 0 &&
+                    currentDateTime.compareTo(eventStart) < 0)) {
+                    String slot = currentDateTime + "/" + event.getStart().toString();
+                    freeSlots.add(slot);
+                    currentDateTime = event.getEnd().toString();
+            }
+            else {
+                currentDateTime = event.getEnd().toString();
+            }
+        }
+        if (currentDateTime.compareTo(endTime) < 0) {
+            freeSlots.add(currentDateTime + "/" + endTime);
+        }
+
+        return freeSlots;
     }
 
 }

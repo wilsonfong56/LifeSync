@@ -40,7 +40,6 @@ function App() {
             });
 
             const calendarData = await calendarResponse.json();
-            console.log(calendarData);
             calendarData.items.forEach((item) => {
                 if (item.primary) {
                     calendarId = item.id;
@@ -55,7 +54,7 @@ function App() {
 
     return (
         <div id="login">
-            <h1>Google Calendar Integration</h1>
+            <h1>LifeSync</h1>
             <button id="loginButton" onClick={handleLogin}>Login with Google</button>
         </div>
     );

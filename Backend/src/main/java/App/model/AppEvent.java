@@ -9,24 +9,27 @@ import jakarta.persistence.Table;
 @Table(name="events")
 public class AppEvent {
 
-    //private String calendarId;]
+    //private String calendarId;
     @Id
     private String eventId;
     private String summary;
     private DateTime startTime;
     private DateTime endTime;
 
+    private int priority;
     private boolean isDynamic;
 
     public AppEvent() {}
 
-    public AppEvent(String eventId, String summary, DateTime startTime, DateTime endTime, boolean isDynamic) {
+    public AppEvent(String eventId, String summary, DateTime startTime, DateTime endTime, boolean isDynamic, int priority) {
         this.eventId = eventId;
         this.summary = summary;
         this.startTime = startTime;
         this.endTime = endTime;
         this.isDynamic = isDynamic;
+        this.priority = priority;
     }
+
 
     public String getEventId() {
         return eventId;
@@ -42,6 +45,14 @@ public class AppEvent {
 
     public DateTime getEndTime() {
         return endTime;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     public boolean isDynamic() {
