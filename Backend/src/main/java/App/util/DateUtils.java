@@ -2,7 +2,8 @@ package App.util;
 
 import com.google.api.client.util.DateTime;
 
-import java.util.List;
+import java.text.ParseException;
+
 
 public class DateUtils {
 
@@ -31,6 +32,12 @@ public class DateUtils {
             case 6: return "Friday";
             default: return "Invalid day";
         }
+    }
+
+    public static long getDurationInMinutes(DateTime startTime, DateTime endTime) throws ParseException {
+        long start = DateTime.parseRfc3339ToSecondsAndNanos(startTime.toString()).getSeconds();
+        long end = DateTime.parseRfc3339ToSecondsAndNanos(endTime.toString()).getSeconds();
+        return end-start/60;
     }
 
 }

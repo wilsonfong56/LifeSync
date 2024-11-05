@@ -99,15 +99,9 @@ public class EventService {
     public String parseInput(String userMessage) throws IOException {
         String answer = parsingAssistant.chat(userMessage);
         if(answer.equals("create")) {
-            // For testing without creating an event
-//            System.out.println(answer);
-//            DateTime now = new DateTime(System.currentTimeMillis());
-//            String answer1 = creationChat.chat("The current time is " + now + userMessage);
-//            System.out.println(answer1);
             return createEvent(userMessage);   //comment out when testing
         }
         else if(answer.equals("delete")) {
-//            System.out.println(answer);
             return deleteEvent(userMessage);
         }
         else {
@@ -115,7 +109,7 @@ public class EventService {
         }
     }
 
-    public String createEvent(String userMessage) throws IOException{ //creates multiple if needed (might want to abstract this later)
+    public String createEvent(String userMessage) throws IOException{ //creates multiple if needed
         DateTime now = new DateTime(System.currentTimeMillis());
         String dayOfWeek = DateUtils.dayOfWeek(now);
         System.out.println(dayOfWeek + now);
@@ -134,6 +128,7 @@ public class EventService {
             String endTime = event.get("endTime");
             boolean isDynamic = Boolean.parseBoolean(event.get("isDynamic"));
             startTime = event.get("startTime");
+            int priority;
 
             Event eventObj = new Event()
                     .setSummary(summary);
@@ -148,18 +143,18 @@ public class EventService {
                     .setDateTime(endDateTime);
             eventObj.setEnd(end);
 
-            String calendarId = "primary";
-            eventObj = service.events().insert(calendarId, eventObj).execute();
-            System.out.printf("Event created: %s\n", eventObj.getHtmlLink());
-
-            //Save our event in our App.repository
-            int priority;
             if (isDynamic) {
                 priority = priorityAssistant.chat(eventObj.getSummary());
             }
             else {
                 priority = 10;
             }
+
+            String calendarId = "primary";
+            eventObj = service.events().insert(calendarId, eventObj).execute();
+            System.out.printf("Event created: %s\n", eventObj.getHtmlLink());
+
+            //Save our event in our App.repository
             AppEvent appEvent = new AppEvent(eventObj.getId(),
                                             eventObj.getSummary(),
                                             eventObj.getStart().getDateTime(),
@@ -222,12 +217,6 @@ public class EventService {
         alertsOn = !alertsOn;
     }
 
-    public long getDurationInMinutes(DateTime startTime, DateTime endTime) throws ParseException {
-        long start = DateTime.parseRfc3339ToSecondsAndNanos(startTime.toString()).getSeconds();
-        long end = DateTime.parseRfc3339ToSecondsAndNanos(endTime.toString()).getSeconds();
-        return end-start/60;
-    }
-
     public ArrayList<String> findFreeSlots() throws IOException {
         ArrayList<String> freeSlots = new ArrayList<>();
         long now = System.currentTimeMillis();
@@ -258,5 +247,7 @@ public class EventService {
 
         return freeSlots;
     }
+
+
 
 }
