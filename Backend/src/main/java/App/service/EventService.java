@@ -1,6 +1,7 @@
 package App.service;
 
 import App.util.DateUtils;
+import App.util.JsonUtils;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -27,13 +28,7 @@ import App.repository.EventRepository;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.time.DayOfWeek;
-import static com.google.api.client.util.DateTime.parseRfc3339ToSecondsAndNanos;
 
 @Service
 @Transactional
@@ -49,7 +44,7 @@ public class EventService {
     @Autowired
     private CreationAssistant creationChat;
     @Autowired
-    private DeletionAssistant deletionChat;
+    private SummaryAssistant summaryAssistant;
     @Autowired
     private ParsingAssistant parsingAssistant;
     @Autowired
@@ -61,7 +56,6 @@ public class EventService {
     public EventService(EventRepository eventRepository, ChatLanguageModel chatLanguageModel) {
         this.eventRepository = eventRepository;
         this.chatLanguageModel = chatLanguageModel;
-
     }
 
     public void authenticate(String token) throws GeneralSecurityException, IOException {
@@ -98,11 +92,16 @@ public class EventService {
 
     public String parseInput(String userMessage) throws IOException {
         String answer = parsingAssistant.chat(userMessage);
-        if(answer.equals("create")) {
+        System.out.println(answer);
+//        if (secondAnswer.equals("update")) {
+//            return rescheduleEvent(userMessage);
+//        }
+        if (answer.equals("create")) {
             return createEvent(userMessage);   //comment out when testing
-        }
-        else if(answer.equals("delete")) {
+        } else if (answer.equals("delete")) {
             return deleteEvent(userMessage);
+        } else if (answer.equals("schedule")) {
+            return scheduleInquiry(userMessage);
         }
         else {
             return chatBot.chat(userMessage);
@@ -172,7 +171,7 @@ public class EventService {
                 .map(AppEvent::getSummary)
                 .toList();
 
-        String summary = deletionChat.chat(eventSummaries + " " + userMessage);
+        String summary = summaryAssistant.chat(eventSummaries + " " + userMessage);
         System.out.println("UserMessage: " + userMessage);
         System.out.println("Event summaries: " + eventSummaries);
         System.out.println("Summary: " + summary);
@@ -191,8 +190,17 @@ public class EventService {
 
     public List<Event> getEventsFromNow() throws IOException {
         Events events = service.events().list("primary")
-                .setMaxResults(100)
+                .setMaxResults(50)
                 .setTimeMin(new DateTime(System.currentTimeMillis()))
+                .setSingleEvents(true)
+                .execute();
+        return events.getItems();
+    }
+
+    public List<Event> getEventsTillNow() throws IOException {
+        Events events = service.events().list("primary")
+                .setMaxResults(50)
+                .setTimeMax(new DateTime(System.currentTimeMillis()))
                 .setSingleEvents(true)
                 .execute();
         return events.getItems();
@@ -248,6 +256,23 @@ public class EventService {
         return freeSlots;
     }
 
+    public String scheduleInquiry(String userMessage) {
+        String eventsJsonArr = JsonUtils.eventsToJson(getEvents());
+        System.out.println("Events as json arr: " + eventsJsonArr);
+        chatBot.chat("Right now it is " + new DateTime(System.currentTimeMillis()));
+        String answer = chatBot.chat("My schedule: " + eventsJsonArr + "\n" + userMessage + " Do not include any explanations or reasoning.");
+        System.out.println("Chatbot answer: " + answer);
+        return answer;
+    }
 
+    public String rescheduleEvent(String userMessage) throws IOException {
+        String summary = summaryAssistant.chat(userMessage);
+
+        AppEvent firstEvent = eventRepository.findBySummary(summary).get(0);
+        String eventJson = JsonUtils.eventToJson(firstEvent);
+        createEvent(eventJson + "\n" + userMessage);
+        eventRepository.delete(firstEvent);
+        return "Event rescheduled";
+    }
 
 }
