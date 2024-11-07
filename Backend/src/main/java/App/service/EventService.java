@@ -24,6 +24,7 @@ import App.model.AppEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import App.repository.EventRepository;
+import org.w3c.dom.events.EventTarget;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -44,13 +45,14 @@ public class EventService {
     @Autowired
     private CreationAssistant creationChat;
     @Autowired
-    private SummaryAssistant summaryAssistant;
+    private DeletionAssistant deletionAssistant;
     @Autowired
     private ParsingAssistant parsingAssistant;
     @Autowired
     private PriorityAssistant priorityAssistant;
     @Autowired
     private ChatBot chatBot;
+
 
     @Autowired
     public EventService(EventRepository eventRepository, ChatLanguageModel chatLanguageModel) {
@@ -93,17 +95,15 @@ public class EventService {
     public String parseInput(String userMessage) throws IOException {
         String answer = parsingAssistant.chat(userMessage);
         System.out.println(answer);
-//        if (secondAnswer.equals("update")) {
-//            return rescheduleEvent(userMessage);
-//        }
         if (answer.equals("create")) {
             return createEvent(userMessage);   //comment out when testing
         } else if (answer.equals("delete")) {
             return deleteEvent(userMessage);
         } else if (answer.equals("schedule")) {
             return scheduleInquiry(userMessage);
-        }
-        else {
+        } else if (answer.equals("reschedule")) {
+            return rescheduleEvent(userMessage);
+        } else {
             return chatBot.chat(userMessage);
         }
     }
@@ -165,23 +165,14 @@ public class EventService {
         return "Event created";
     }
 
-    public String deleteEvent(String userMessage) throws IOException{    //
-        List<String> eventSummaries = eventRepository.findAll()
-                .stream()
-                .map(AppEvent::getSummary)
-                .toList();
-
-        String summary = summaryAssistant.chat(eventSummaries + " " + userMessage);
-        System.out.println("UserMessage: " + userMessage);
-        System.out.println("Event summaries: " + eventSummaries);
-        System.out.println("Summary: " + summary);
-
-        List<AppEvent> events = eventRepository.findBySummary(summary);
-        for (AppEvent event : events) {
-            service.events().delete("primary", event.getEventId()).execute();
-            eventRepository.delete(event);
-        }
-        return "Event(s) deleted";
+    public String deleteEvent(String userMessage) throws IOException {    //
+        List<AppEvent> futureEvents = eventRepository.findByStartTimeAfter(new DateTime(System.currentTimeMillis()));
+        String answer = deletionAssistant.chat(JsonUtils.eventsToJson(futureEvents) + "\n" + userMessage);
+        System.out.println(JsonUtils.eventsToJson(futureEvents));
+        System.out.println(answer);
+        service.events().delete("primary", answer).execute();
+        eventRepository.deleteById(answer);
+        return "Event deleted";
     }
 
     public List<AppEvent> getEvents() {
@@ -266,12 +257,12 @@ public class EventService {
     }
 
     public String rescheduleEvent(String userMessage) throws IOException {
-        String summary = summaryAssistant.chat(userMessage);
-
-        AppEvent firstEvent = eventRepository.findBySummary(summary).get(0);
-        String eventJson = JsonUtils.eventToJson(firstEvent);
-        createEvent(eventJson + "\n" + userMessage);
-        eventRepository.delete(firstEvent);
+        List<AppEvent> events = eventRepository.findByStartTimeAfter(new DateTime(System.currentTimeMillis()));
+        String eventId = deletionAssistant.chat(JsonUtils.eventsToJson(events) + "\n" + userMessage);
+        AppEvent event = eventRepository.findAppEventByEventId(eventId);
+        createEvent(JsonUtils.eventToJson(event) + "\n" + userMessage);
+        service.events().delete("primary", eventId).execute();
+        eventRepository.deleteAppEventByEventId(eventId);
         return "Event rescheduled";
     }
 
