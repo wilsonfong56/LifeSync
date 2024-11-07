@@ -24,7 +24,6 @@ import App.model.AppEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import App.repository.EventRepository;
-import org.w3c.dom.events.EventTarget;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -111,6 +110,7 @@ public class EventService {
     public String createEvent(String userMessage) throws IOException{ //creates multiple if needed
         DateTime now = new DateTime(System.currentTimeMillis());
         String dayOfWeek = DateUtils.dayOfWeek(now);
+        String res = "Your event has been created.";
         System.out.println(dayOfWeek + now);
         String answer = creationChat.chat("The current time is " + dayOfWeek + ", " + now + ". " + userMessage);
 
@@ -162,7 +162,11 @@ public class EventService {
 
             eventRepository.save(appEvent);
         }
-        return "Event created";
+        String assistiveMaterial = generateAssistiveMaterial(userMessage);
+        if (!assistiveMaterial.equals("n/a")) {
+            res += " " + assistiveMaterial;
+        }
+        return res;
     }
 
     public String deleteEvent(String userMessage) throws IOException {    //
@@ -251,8 +255,8 @@ public class EventService {
         String eventsJsonArr = JsonUtils.eventsToJson(getEvents());
         System.out.println("Events as json arr: " + eventsJsonArr);
         chatBot.chat("Right now it is " + new DateTime(System.currentTimeMillis()));
-        String answer = chatBot.chat("My schedule: " + eventsJsonArr + "\n" + userMessage + " Do not include any explanations or reasoning.");
-        System.out.println("Chatbot answer: " + answer);
+        String answer = chatBot.chat("My schedule: " + eventsJsonArr + "\n" + userMessage + " Do not include any explanations or reasoning." +
+                                    "Respond like a human.");
         return answer;
     }
 
@@ -266,4 +270,10 @@ public class EventService {
         return "Event rescheduled";
     }
 
+    public String generateAssistiveMaterial(String userMessage) {
+        String prePrompt = "If possible (if not, return 'n/a'), give assistive material like links to Youtube videos/channels, " +
+                "links to websites, or links to blogs pertaining to the following user message: ";
+        String answer = chatBot.chat(prePrompt + userMessage);
+        return answer;
+    }
 }
