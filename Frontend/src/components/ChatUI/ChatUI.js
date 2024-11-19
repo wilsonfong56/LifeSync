@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import { ChatFeed, Message } from "react-chat-ui";
 import Linkify from "react-linkify";
-import "./App.css";
+import "../../App.css";
 import "./ChatUI.css";
 
 function ChatUI({ fetchCalendar }) {

@@ -1,4 +1,4 @@
-package App.service;
+package App.service.config;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;

@@ -1,0 +1,61 @@
+/* Header Styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #fdf4e3;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Left Section Logo */
+.header-left .app-logo {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-transform: capitalize;
+    letter-spacing: 1.5px;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover effect with smooth scaling */
+.header-left .app-logo:hover {
+    color: #007bff;
+    transform: scale(1.05);
+    cursor: pointer;
+}
+
+/* Center Navigation Links */
+.header-nav {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-link {
+    text-decoration: none;
+    font-size: 1rem;
+    color: #444;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #007bff;
+}
+
+/* Right Section */
+.header-right .login-button {
+    padding: 8px 16px;
+    font-size: 1rem;
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.header-right .login-button:hover {
+    background-color: #2563eb;
+}

@@ -1,4 +1,4 @@
-package App.service;
+package App.service.config;
 
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import org.springframework.context.annotation.Bean;

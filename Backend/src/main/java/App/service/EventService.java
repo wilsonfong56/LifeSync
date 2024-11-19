@@ -1,5 +1,9 @@
 package App.service;
 
+import App.service.Assistants.CreationAssistant;
+import App.service.Assistants.DeletionAssistant;
+import App.service.Assistants.ParsingAssistant;
+import App.service.Assistants.PriorityAssistant;
 import App.util.DateUtils;
 import App.util.JsonUtils;
 import com.google.api.client.auth.oauth2.BearerToken;
@@ -94,7 +98,7 @@ public class EventService {
     public String parseInput(String userMessage) throws IOException {
         String answer = parsingAssistant.chat(userMessage);
         System.out.println(answer);
-        if (answer.equals("create")) {
+        if (answer.equals("create")) {  
             return createEvent(userMessage);   //comment out when testing
         } else if (answer.equals("delete")) {
             return deleteEvent(userMessage);
@@ -253,9 +257,13 @@ public class EventService {
 
     public String scheduleInquiry(String userMessage) {
         String eventsJsonArr = JsonUtils.eventsToJson(getEvents());
+        for(AppEvent event : getEvents()) {
+            System.out.println(event);
+        }
         System.out.println("Events as json arr: " + eventsJsonArr);
-        chatBot.chat("Right now it is " + new DateTime(System.currentTimeMillis()));
-        String answer = chatBot.chat("My schedule: " + eventsJsonArr + "\n" + userMessage + " Do not include any explanations or reasoning." +
+        String answer = chatBot.chat("Right now it is " + new DateTime(System.currentTimeMillis()) +
+                                    ". My schedule: " + eventsJsonArr + "\n" + userMessage +
+                                    " Do not include any explanations or reasoning." +
                                     "Respond like a human.");
         return answer;
     }

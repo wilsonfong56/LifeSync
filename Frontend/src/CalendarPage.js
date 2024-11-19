@@ -4,13 +4,13 @@ import googleCalendarPlugin from '@fullcalendar/google-calendar';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import './index.css'
-import './CalendarUI.css';
+import './CalendarPage.css';
 import { useNavigate, useLocation } from "react-router-dom";
 import { googleLogout } from "@react-oauth/google";
 import Switch from "react-switch";
-import ChatUI from "./ChatUI";
+import ChatUI from "./components/ChatUI/ChatUI";
 
-function CalendarUI() {
+function CalendarPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const calendarRef = useRef(null);
@@ -28,7 +28,7 @@ function CalendarUI() {
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                googleCalendarApiKey: 'GOOGLE_CALENDAR_API_KEY',
+                googleCalendarApiKey: 'AIzaSyDhF-MYO1Ukf2FgUD2341crTZ7--NiUEjs',
                 events: {
                     googleCalendarId: calendarId,
                     extraParams: {
@@ -80,4 +80,4 @@ function CalendarUI() {
         ;
 }
 
-export default CalendarUI;
+export default CalendarPage;

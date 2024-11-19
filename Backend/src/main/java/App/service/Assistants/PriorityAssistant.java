@@ -1,4 +1,4 @@
-package App.service;
+package App.service.Assistants;
 
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
