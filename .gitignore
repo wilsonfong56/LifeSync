@@ -1,0 +1,6 @@
+# Ignore IntelliJ project files
+.idea/
+*.iml
+
+# Ignore sensitive credentials
+StoredCredential
