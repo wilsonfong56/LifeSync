@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/LifeSync.iml" filepath="$PROJECT_DIR$/.idea/LifeSync.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/LifeSync-Backend.main.iml" filepath="$PROJECT_DIR$/.idea/modules/LifeSync-Backend.main.iml" />
     </modules>
   </component>
 </project>
