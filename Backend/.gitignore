@@ -5,3 +5,7 @@
 build
 
 /src/main/resources
+
+# Ignore IntelliJ project files
+.idea/
+*.iml
